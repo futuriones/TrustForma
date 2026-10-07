@@ -1,152 +1,265 @@
-<p align="center">
-  <img src="icons/trustforma.png" alt="TrustForma" width="96">
-</p>
+<div align="center">
 
-# TrustForma: formación en concienciación de ciberseguridad con Moodle "como código"
+<img src="icons/trustforma.png" alt="TrustForma" width="120">
 
-**Un producto de [Futurion Solutions S.L.](https://solutions.futurion.es).**
+# TrustForma
 
-Plataforma de formación para empleados, construida a partir del **Kit de concienciación de INCIBE**, pensada para auditoría:
-cada empleado lee el material, aprueba un test por módulo y obtiene un certificado; **CISO Assistant** recoge la evidencia por API.
+**Formación en concienciación de ciberseguridad para tu plantilla, lista para auditoría.**<br>
+Del kit de INCIBE a un curso de Moodle con tests, certificados y evidencia para CISO Assistant, con un solo comando.
 
-Todo el contenido se define en ficheros. Cambiar el material o los cursos y volver a desplegar es un comando; nunca se pierde el
-historial de los empleados.
+![Licencia: Unlicense](https://img.shields.io/badge/licencia-Unlicense-ff2f70?style=flat-square)
+![Moodle 4.5 LTS](https://img.shields.io/badge/Moodle-4.5%20LTS-f98012?style=flat-square)
+![Docker](https://img.shields.io/badge/Docker-Compose%20v2-2d7bf2?style=flat-square)
+![Linux y macOS](https://img.shields.io/badge/Linux%20%C2%B7%20macOS-a459ff?style=flat-square)
+
+**Un producto de [Futurion Solutions S.L.](https://solutions.futurion.es)**
+
+[Instalar](#instalar-paso-a-paso) · [Primeros pasos](#después-de-instalar) · [Operación](#operación-del-día-a-día) · [Si algo falla](#si-algo-falla) · [Licencia](#licencia)
+
+<br>
+
+<img src="docs/img/login.png" alt="Pantalla de acceso de TrustForma" width="48%"> <img src="docs/img/certificado.png" alt="Certificado de finalización" width="48%">
+
+</div>
+
+---
+
+## Qué obtienes
+
+| | |
+|---|---|
+| **Curso listo** | 9 módulos del kit de INCIBE con su documento, ficha, consejos, carteles y presentación del formador. |
+| **Un test por módulo** | 90 preguntas generadas del propio kit; se aprueba cada test, en cualquier momento. |
+| **Un plazo por módulo** | Todo abierto desde el primer día; el módulo N vence a final del mes N. Lo cambia el administrador desde Moodle, sin tocar código. |
+| **Certificado** | Se emite solo al aprobar los 9 tests y llega por correo, con código de verificación pública. |
+| **Avisos** | Recordatorios por correo antes de cada plazo, solo a quien aún no ha aprobado. |
+| **Evidencia de auditoría** | API de solo lectura por persona (completado, notas, plazos). La recoge **CISO Assistant** (ISO 27001 A.6.3, ENS mp.per.3/4, NIS2 art. 21.2.g). |
+| **Repetible** | Todo son ficheros: cambias, ejecutas `make plan` para ver qué cambiaría y `make deploy`. Nadie pierde su progreso. |
+| **Imagen Futurion** | Tema de Moodle, logotipo, favicon, tipografías y certificado con la imagen corporativa de Futurion Solutions. |
 
 > **El kit de INCIBE no forma parte de este repositorio.** Lo descargas tú desde INCIBE y TrustForma lo convierte en un curso
-> de Moodle en marcha con un solo comando (ver «Puesta en marcha»). Los textos del kit y las preguntas que se extraen de él
-> son de INCIBE y se usan bajo sus condiciones (ver «Licencia»).
+> de Moodle en marcha con un solo comando. Los textos del kit y las preguntas que se extraen de él son de INCIBE y se usan bajo sus condiciones (ver [Licencia](#licencia)).
 
-## Cómo encaja
-
-```
-kit INCIBE (PDF, PPTX, PNG)  ──►  courses/<curso>/course.yaml + preguntas (YAML, generadas del kit)
-                                        │  make build
-                                        ▼
-                              build/<curso>-<año>/manifest.json + ficheros optimizados
-                                        │  make plan  →  make deploy
-                                        ▼
-                     Moodle 4.5 LTS (curso CONC-2026, 9 módulos, 9 tests, certificado)
-                                        │  API de solo lectura
-                                        ▼
-        Portal GRC, CISO Assistant (workflow W6, mensual → revisión de la evidencia EV-TRN-01)
-```
-
-## Puesta en marcha
-
-Funciona igual en **Linux** y en **macOS**: abre una terminal en la carpeta del repositorio y ejecuta `make <objetivo>`
-(en macOS `gmake <objetivo>`, ver más abajo).
-
-### Requisitos
-
-- **Docker** con el plugin Compose v2 (`docker compose version` debe funcionar): Docker Engine en Linux ([instalación oficial](https://docs.docker.com/engine/install/)), Docker Desktop en macOS.
-- **Linux (Debian/Ubuntu):** `sudo apt install make python3 python3-venv openssl curl poppler-utils git`
-- **macOS:** `brew install make poppler` (`openssl`, `curl`, `python3` y `git` ya vienen con el sistema o con las herramientas de Xcode). macOS trae GNU make 3.81, demasiado antiguo:
-  Homebrew instala la versión actual como **`gmake`**. Úsalo en lugar de `make` en todos los comandos de este documento (el Makefile se niega a ejecutarse con make 3.x).
-
-### De cero a un curso en marcha (un comando)
-
-1. Descarga `kit_concienciacion.zip` desde INCIBE: https://www.incibe.es/empresas/formacion/kit-concienciacion y déjalo en la carpeta `upload/` (exactamente un zip).
-2. Ejecuta:
+## Cómo funciona
 
 ```
-git clone https://github.com/futuriones/TrustForma.git && cd TrustForma
-# (deja aquí el zip: upload/kit_concienciacion.zip)
+ kit INCIBE (zip que descargas)      courses/<curso>/course.yaml  +  preguntas (YAML, generadas del kit)
+              │  make setup                          │
+              └──────────────────────┬───────────────┘
+                                     │  make build
+                                     ▼
+                  build/<curso>-<año>/manifest.json  +  ficheros optimizados
+                                     │  make plan  (lees)  →  make deploy
+                                     ▼
+          Moodle 4.5 LTS: curso CONC-2026 · 9 módulos · 9 tests · certificado
+                                     │  API de solo lectura
+                                     ▼
+          Portal GRC, CISO Assistant (workflow W6, mensual → evidencia EV-TRN-01)
+```
+
+---
+
+## Instalar paso a paso
+
+Funciona igual en **Linux** y en **macOS**. Tiempo total: entre 15 y 20 minutos la primera vez, según tu conexión (casi todo es construir las imágenes de Docker).
+
+> **En macOS escribe `gmake` donde veas `make`.** Apple trae GNU make 3.81, demasiado antiguo; el Makefile se niega a ejecutarse con él.
+
+### Paso 1 · Instala lo necesario
+
+| Necesitas | Linux (Debian/Ubuntu) | macOS |
+|---|---|---|
+| **Docker** con Compose v2 | [Docker Engine](https://docs.docker.com/engine/install/) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) (ábrelo y espera a que arranque) |
+| **make, Python 3 con venv, poppler, openssl, curl, git** | `sudo apt install make python3 python3-venv poppler-utils openssl curl git` | `brew install make poppler` (lo demás ya viene con macOS) |
+
+Comprueba que todo responde:
+
+```bash
+docker compose version      # debe mostrar la versión, no un error
+python3 --version
+pdftotext -v                # poppler
+make --version              # en macOS: gmake --version  (debe decir GNU Make 4 o más)
+```
+
+### Paso 2 · Descarga el proyecto
+
+```bash
+git clone https://github.com/futuriones/TrustForma.git
+cd TrustForma
+```
+
+### Paso 3 · Descarga el kit de INCIBE
+
+1. Entra en <https://www.incibe.es/empresas/formacion/kit-concienciacion> y descarga **`kit_concienciacion.zip`** (unos 550 MB).
+2. Déjalo, sin descomprimir, en la carpeta **`upload/`** del proyecto:
+
+```
+TrustForma/
+└── upload/
+    └── kit_concienciacion.zip     ← aquí (exactamente un zip)
+```
+
+### Paso 4 · Lanza todo con un comando
+
+Elige la **fecha de inicio** del programa (formato `AAAA-MM-DD`): el módulo 1 vence a final de ese mes.
+
+```bash
 make live START=2026-10-01
 ```
 
-`make live` hace, en orden: `venv` (librerías Python fijadas, con sus hashes) → importa el zip en `kit/` → genera las preguntas (`courses/concienciacion/questions/`) →
-valida → `up` (crea `lms/docker/.env` con contraseñas aleatorias y arranca Moodle, base de datos, nginx, cron y Mailpit) → `install` → `configure` →
-`build` → `plan` (te muestra lo que va a crear) → `deploy`.
-Tarda unos 15 minutos la primera vez (construye las imágenes). Después: `make e2e` para comprobar el recorrido completo del empleado.
+Esto es lo que hace, en orden (puedes verlo en la pantalla):
 
-Si prefieres hacerlo por pasos: `make setup` (solo el contenido: importar el zip, extraer las preguntas, validar) y luego `make up install configure build plan deploy` como en el caso B.
+| # | Qué pasa | Para qué |
+|---|---|---|
+| 1 | Crea el entorno Python (`.venv`) con las librerías fijadas y verificadas por hash | Que la construcción sea idéntica en cualquier máquina |
+| 2 | Importa el zip a `kit/` (sin las herramientas de phishing/USB, que nunca se publican) | Material del curso |
+| 3 | Genera las 90 preguntas desde los PDF de test del kit | Un banco de preguntas por módulo |
+| 4 | Valida el curso, el kit y las preguntas | Falla pronto y con un mensaje claro si algo no cuadra |
+| 5 | Arranca Moodle, base de datos, nginx, cron y Mailpit en Docker | La plataforma (la primera vez construye las imágenes: ~10 min) |
+| 6 | Instala Moodle y el plugin de sincronización | |
+| 7 | Configura el sitio: zona horaria, finalización, API, cohorte `empleados` e imagen Futurion | |
+| 8 | Construye el curso y **te muestra el plan** de lo que va a crear | Nada se escribe sin que se vea antes |
+| 9 | Despliega el curso en Moodle | Curso **CONC-2026** listo |
 
-- **Moodle:** http://localhost:8080 · **Mailpit** (correo de prueba, aquí llegan los avisos): http://localhost:8025 (solo accesibles desde este equipo).
-- **Usuario y contraseña de administrador:** en `lms/docker/.env` (`MOODLE_ADMIN_USER` y `MOODLE_ADMIN_PASSWORD`).
+Al terminar verás algo como `== applied: 155 create, 90 link, 1 update`.
 
-### Imagen corporativa
+### Paso 5 · Abre Moodle
 
-El tema de Moodle (Boost) lleva la imagen de Futurion Solutions: degradados azul marino e índigo, botones primarios en coral, tipografías Poppins e Inter
-(alojadas en el propio plugin, sin peticiones a servidores de fuentes externos), logotipo, logotipo compacto y favicon de TrustForma, y el certificado con los mismos colores.
-`make configure` lo aplica **una sola vez**: después el administrador de Moodle lo gestiona en *Administración del sitio → Apariencia* y un despliegue no lo toca.
-`make configure REBRAND=1` lo vuelve a aplicar. Ficheros: `lms/moodle/local_awarenesssync/branding/` (logos, `brand.scss`) y `fonts/` (licencia SIL OFL).
+| | |
+|---|---|
+|  Moodle | <http://localhost:8080> |
+|  Correo de prueba (Mailpit) | <http://localhost:8025> (o el puerto de `MAILPIT_PORT` en `lms/docker/.env`) |
+|  Usuario administrador | el valor de `MOODLE_ADMIN_USER` en `lms/docker/.env` (por defecto `admin`) |
+|  Contraseña | el valor de `MOODLE_ADMIN_PASSWORD` en el mismo fichero (se generó al azar) |
 
-### Elige tu caso
-
-**A** abrir el LMS que ya está instalado · **B** instalarlo por pasos · **C** he cambiado contenido · **D** probarlo como empleado.
-
-### Caso A: solo quiero abrir el LMS (ya está instalado)
-
-```
-make up                                   # arranca Moodle, base de datos, nginx, cron y Mailpit (los datos se conservan)
-make status                               # debe decir: installed: 4.5.14 ... y local_awarenesssync: <versión>
-```
-
-- **Parar:** `make down` (los datos se conservan). **Ver registros:** `make logs`.
-- Si `make status` dice `stack is not running: make up` o `not installed: make install`, esto no es el caso A: pasa al caso B.
-
-### Caso B: primera instalación por pasos, o volúmenes vacíos
-
-```
-make setup                                # importa el zip de upload/ en kit/, extrae las preguntas y valida
-make up                                   # crea lms/docker/.env con contraseñas aleatorias si no existe y arranca la pila
-make install                              # instala Moodle y el plugin (si ya estaba instalado, solo actualiza; se puede repetir)
-make configure                            # ajustes del sitio: finalización, zona horaria, API REST, cohorte «empleados», token de la API, imagen corporativa
-make build START=2026-10-01               # construye el ciclo 2026 a partir del kit y de courses/concienciacion
-make plan  START=2026-10-01               # LEE lo que va a cambiar; no escribe nada
-make deploy START=2026-10-01              # crea el curso en Moodle
-make plan  START=2026-10-01 EXTRA=--fail-on-changes   # comprobación: debe decir «nothing to do»
-make status
+```bash
+grep MOODLE_ADMIN lms/docker/.env      # para verlos
 ```
 
-### Caso C: he cambiado contenido (preguntas, textos, kit)
+Solo son accesibles desde tu equipo (están ligados a `127.0.0.1`).
 
-```
-make build START=2026-10-01 && make plan START=2026-10-01     # lee el plan
-make deploy START=2026-10-01
-```
+### Paso 6 · Comprueba que todo funciona
 
-Qué se puede cambiar y qué se bloquea: tabla «Operación» más abajo. Para un kit nuevo de INCIBE: `make import-kit` (pasos en [upload/README.md](upload/README.md)).
-
-### Caso D: probarlo como empleado
-
-```
-make e2e                                  # usuarios de prueba recorren todo el flujo en una copia desechable del curso (ciclo 9999); nunca toca el ciclo real
-make report START=2026-10-01              # lo que recibirá el portal GRC, comprobado contra el contrato (falla si Moodle devuelve un error)
+```bash
+make e2e
 ```
 
-El curso real (CONC-2026) empieza **sin nadie matriculado**: las personas entran al añadirlas a la cohorte `empleados` (fila «Usuarios: alta de empleados» de la tabla de abajo).
+Usuarios de prueba recorren todo el camino (leer, aprobar los 9 tests, certificado, API) en una **copia desechable** del curso que se borra al terminar: nunca toca el curso real. Debe acabar con `46 passed, 0 failed` y `report matches compliance-report.v1.schema.json`.
 
-### Si algo falla
+---
 
-`make status` dice si la pila está parada o Moodle sin instalar · `make logs` muestra los registros · `make help` lista todos los comandos.
+## Después de instalar
 
-## Operación
+El curso real (CONC-2026) empieza **sin nadie matriculado**. Para dar de alta a las personas:
+
+1. Entra como administrador → **Administración del sitio → Usuarios → Cuentas → Cohortes**.
+2. Abre la cohorte **`empleados`** → **Asignar** y añade a las personas (o súbelas en bloque con *Subir usuarios*, columna `cohort1` = `empleados`).
+3. En menos de un minuto (cron) quedan matriculadas en el curso. A partir de ahí cada persona entra, lee, aprueba los tests y recibe su certificado.
+
+Para ver el resultado como empleado, crea una cuenta de prueba, añádela a la cohorte y entra con ella en una ventana privada.
+
+**Lo siguiente que querrás hacer** (todo está en [Operación del día a día](#operación-del-día-a-día)):
+
+- Ajustar los **plazos** de cada módulo (desde Moodle, sin terminal).
+- Activar los **avisos por correo** y configurar el correo real ([Correo saliente](#correo-saliente-smtp-y-oauth-2)).
+- Conectar el **inicio de sesión único** con Microsoft Entra ID ([SSO](#inicio-de-sesión-único-microsoft-entra-id)).
+- Enlazar con **CISO Assistant** ([guía de integración](docs/ciso-assistant-integration.md)).
+
+**Parar y volver a arrancar** (los datos se conservan):
+
+```bash
+make down      # parar
+make up        # arrancar de nuevo (no hace falta repetir make live)
+make status    # ¿está todo en marcha?
+```
+
+### Qué recibe cada persona
+
+Al aprobar los 9 tests recibe por correo el certificado de finalización, con la imagen de Futurion Solutions, su nombre, la fecha y un código que cualquiera puede verificar.
+
+<div align="center">
+<img src="docs/img/certificado.png" alt="Certificado de finalización de TrustForma" width="70%">
+</div>
+
+---
+
+## Casos habituales
+
+| Quiero… | Ejecuto… |
+|---|---|
+| **A.** Abrir el LMS ya instalado | `make up` y `make status` (debe decir `installed: 4.5.x`). Parar: `make down`. Registros: `make logs` |
+| **B.** Instalar por pasos (en vez de `make live`) | `make setup` → `make up` → `make install` → `make configure` → `make build START=…` → `make plan START=…` (léelo) → `make deploy START=…` → `make plan START=… EXTRA=--fail-on-changes` (debe decir «nothing to do») |
+| **C.** He cambiado preguntas, textos o el kit | `make build START=…` → `make plan START=…` (léelo) → `make deploy START=…`. Qué se bloquea: tabla de más abajo. Kit nuevo de INCIBE: [upload/README.md](upload/README.md) |
+| **D.** Probarlo como empleado | `make e2e` (copia desechable) y `make report START=…` (lo que recibirá el portal GRC) |
+
+---
+
+## Operación del día a día
+
+Todo lo que harás después de instalar, agrupado por tema. Los comandos se ejecutan desde la raíz del proyecto (en macOS, `gmake`).
+
+### Contenido y ciclos
 
 | Quiero… | Hago… |
 |---|---|
 | INCIBE publica una versión nueva del kit | Dejo `kit_concienciacion.zip` en `upload/` → `make import-kit` (informe, no escribe nada) → `make import-kit APPLY=1`. Pasos completos: [upload/README.md](upload/README.md) |
 | Cambiar el texto de una pregunta | Edito `courses/concienciacion/questions/Mnn.yaml` → `make build … && make plan … && make deploy …` (el kit de `kit/` no se edita a mano; las preguntas son locales, no se suben a git) |
+| Añadir un módulo | Llega en el zip nuevo de INCIBE (`make import-kit`) + una entrada en `modules:` de `courses/concienciacion/course.yaml` (+ su test) |
+| Empezar el ciclo del año siguiente | `make build START=2027-10-01 && make deploy START=2027-10-01`: curso nuevo, el de 2026 queda intacto como evidencia |
+| Añadir una pregunta / cambiar la nota de corte con intentos ya hechos | Se **bloquea** (reevaluaría a personas): hazlo en el ciclo siguiente, o `EXTRA=--allow-structure-change` bajo tu responsabilidad |
+| Cerrar un ciclo terminado (queda como evidencia inmutable) | `make close-cycle CYCLE=2026`: a partir de ahí cualquier `plan`/`deploy` de ese ciclo se rechaza (sin opción para saltárselo); quien no haya terminado aún puede seguir. Los cambios van al ciclo siguiente |
+| Cambiar la regla de compleción de una actividad ya usada, o quitar un test que ya han aprobado | Se **bloquea** (borraría el estado de las personas): ciclo siguiente, o `EXTRA=--allow-structure-change` bajo tu responsabilidad |
+
+### Plazos, avisos y resultados
+
+| Quiero… | Hago… |
+|---|---|
 | Cambiar los plazos (lo hace el administrador de Moodle, sin terminal) | Curso → un test → **Ajustes** → *Finalización de la actividad* → **Se espera que se complete el** → Guardar. Para varios a la vez: curso → **Más** → **Finalización del curso** → **Edición masiva de finalización de actividades**. Inicio/fin del programa: curso → **Ajustes** → *Fecha de inicio/fin del curso*. Cada módulo tiene **una sola fecha, la de su test**; las personas la ven en su *Línea de tiempo* y *Calendario*. Nadie pierde progreso y `make deploy` **nunca** la sobrescribe (`course.yaml` solo da el valor inicial al crear el ciclo). Quién y cuándo: *Administración del sitio → Informes → Registros* |
 | Qué ven las personas tras un test | Test → **Ajustes** → **Opciones de revisión** (lo edita el administrador; por defecto nota + qué respuestas acertaron, nunca la opción correcta). `quiz_defaults.review` de `course.yaml` solo es el valor inicial de un test nuevo |
 | Avisos por correo antes de un plazo | *Administración del sitio → Plugins → Plugins locales → Sincronización de formación en concienciación*: activar, días antes (por defecto `7,1`) y aviso al vencer. Cada día a las 08:00 se avisa solo a quien no ha aprobado ese test, siguiendo las fechas del test (si mueves un plazo, los avisos se ajustan solos). Cada persona elige canales en sus preferencias de notificación |
 | Configurar el correo saliente | Todo en `lms/docker/.env` (variables `MOODLE_SMTP_*`), sección «Correo saliente» más abajo. Prueba: `make mail-test TO=alguien@empresa.com` |
-| Estado de cumplimiento para CISO Assistant | La API añade `compliance_status` por persona: `compliant` (curso completado), `on_track`, `degraded` (algún módulo fuera de plazo) y `failed` (pasó el último plazo sin completar) y `totals.compliance` |
-| Añadir un módulo | Llega en el zip nuevo de INCIBE (`make import-kit`) + una entrada en `modules:` de `courses/concienciacion/course.yaml` (+ su test) |
-| Empezar el ciclo del año siguiente | `make build START=2027-10-01 && make deploy START=2027-10-01`: curso nuevo, el de 2026 queda intacto como evidencia |
-| Añadir una pregunta / cambiar la nota de corte con intentos ya hechos | Se **bloquea** (reevaluaría a personas): hazlo en el ciclo siguiente, o `EXTRA=--allow-structure-change` bajo tu responsabilidad |
+| Qué puede cambiar el administrador en Moodle sin que un despliegue lo deshaga | Plazos de cada test, opciones de revisión de los tests, fechas de inicio/fin y categoría del curso, avisos. **Todo lo demás lo fija el repositorio** y vuelve a su valor en el siguiente despliegue que toque ese elemento: nombres, ficheros, número de intentos, nota de corte, restricciones «completa X antes» y visibilidad de las actividades, diseño del certificado |
+
+### Personas
+
+| Quiero… | Hago… |
+|---|---|
 | Usuarios: alta de empleados | Añadirlos a la cohorte `empleados` (Administración → Usuarios → Cohortes) o en bloque con *Subir usuarios* (`cohort1=empleados`); se matriculan solos en todos los ciclos. El SSO de Entra crea la cuenta pero **no** la matricula: ver «Inicio de sesión único» |
 | Una persona deja la empresa | Sácala de la cohorte `empleados` y **suspende** su cuenta; no la borres hasta archivar el ciclo (`make backup`). Su matrícula queda suspendida y sigue apareciendo en el informe con `enrolment_active=false` (fuera de los totales). Una cuenta **borrada** desaparece de la evidencia |
-| Cerrar un ciclo terminado (queda como evidencia inmutable) | `make close-cycle CYCLE=2026`: a partir de ahí cualquier `plan`/`deploy` de ese ciclo se rechaza (sin opción para saltárselo); quien no haya terminado aún puede seguir. Los cambios van al ciclo siguiente |
-| Cambiar la regla de compleción de una actividad ya usada, o quitar un test que ya han aprobado | Se **bloquea** (borraría el estado de las personas): ciclo siguiente, o `EXTRA=--allow-structure-change` bajo tu responsabilidad |
+
+### Evidencia, seguridad y copias
+
+| Quiero… | Hago… |
+|---|---|
+| Estado de cumplimiento para CISO Assistant | La API añade `compliance_status` por persona: `compliant` (curso completado), `on_track`, `degraded` (algún módulo fuera de plazo) y `failed` (pasó el último plazo sin completar) y `totals.compliance` |
 | Copia de seguridad / restauración | `make backup` (base de datos + ficheros + `META` con la versión; una carpeta `backups/<fecha>` que existe está completa) / `make restore BACKUP=backups/<fecha> CONFIRM=yes` (destruye los datos actuales; la base de datos se restaura en una transacción, los ficheros no: si ese paso falla, repite la restauración). Las copias contienen datos personales y no se borran solas |
 | Rotar el token de la API | `make rotate-token` y pegar el valor nuevo en el portal GRC: *Workflows › W6 › Secrets › `moodle_token`* |
 | Limitar desde dónde se acepta el token de la API | `MOODLE_GRC_TOKEN_IPS=<IP o subred>,…` en `lms/docker/.env` y `make up configure` |
-| Qué puede cambiar el administrador en Moodle sin que un despliegue lo deshaga | Plazos de cada test, opciones de revisión de los tests, fechas de inicio/fin y categoría del curso, avisos. **Todo lo demás lo fija el repositorio** y vuelve a su valor en el siguiente despliegue que toque ese elemento: nombres, ficheros, número de intentos, nota de corte, restricciones «completa X antes» y visibilidad de las actividades, diseño del certificado |
+
+### Mantenimiento
+
+| Quiero… | Hago… |
+|---|---|
 | Actualizar los paquetes del sistema de las imágenes | `make rebuild` (reconstruye sin caché, unos 10 minutos); `make up` no vuelve a aplicar actualizaciones |
 | Comprobar el código | `make lint` (ruff + sintaxis PHP) y `make test` |
 | Cambiar la versión de una librería Python | Edita `lms/tools/requirements.in`, luego `make lock venv` (regenera `requirements.txt` con todas las dependencias y sus hashes) |
 | Ver todos los comandos | `make help` |
+
+---
+
+## Imagen corporativa
+
+El tema de Moodle (Boost) lleva la imagen de **Futurion Solutions**: degradados azul marino e índigo, botones primarios en coral, tipografías Poppins e Inter
+(alojadas en el propio plugin, sin peticiones a servidores de fuentes externos), logotipo, logotipo compacto y favicon de TrustForma, y un certificado con el mismo estilo (logotipo y franja coral).
+
+| Qué | Dónde está | Quién lo gestiona después |
+|---|---|---|
+| Tema, color de marca, logotipos, favicon | `lms/moodle/local_awarenesssync/branding/` (`brand.scss`, imágenes) y `fonts/` (licencia SIL OFL) | El administrador, en *Administración del sitio → Apariencia* |
+| Diseño del certificado | `lms/moodle/local_awarenesssync/certtemplates/concienciacion.json` | El repositorio (se reaplica al desplegar) |
+
+`make configure` aplica la imagen **una sola vez**; un despliegue no la toca. Para volver a aplicarla: `make configure REBRAND=1`.
+
+---
 
 ## Correo saliente (SMTP y OAuth 2)
 
@@ -174,6 +287,8 @@ con caducidad corta; (5) Exchange Online: habilitar SMTP AUTH **solo en ese buz�
 `https://mail.google.com/` (no existe otro más estrecho para SMTP), cliente OAuth «Aplicación web» con la URI de redirección anterior; (3) Consola de administración → Seguridad → Controles de API: marcar el cliente como de confianza
 solo para esa unidad. Diferencias con la guía genérica XOAUTH2: Moodle usa el flujo **delegado** (no soporta certificado ni «client credentials») y guarda el token de actualización en su base de datos (y por tanto en cada copia de seguridad: mantened `backups/` en privado).
 Códigos habituales: `535 5.7.3` (autenticación: SMTP AUTH desactivado en el buzón o consentimiento pendiente), `invalid_grant` (reconectar la cuenta del sistema), `SendAsDenied` (`MOODLE_NOREPLY` distinto de `MOODLE_SMTP_USER`).
+
+---
 
 ## Inicio de sesión único (Microsoft Entra ID)
 
@@ -209,6 +324,8 @@ Errores habituales: AADSTS50105 (la persona no está asignada a la aplicación),
 **Bajas:** bloquea a la persona en Entra **y** suspende su cuenta en Moodle y sácala de la cohorte (regla de la tabla de arriba; no se borra).
 **Ojo:** el secreto de cliente queda en la base de datos de Moodle y, por tanto, en cada copia de seguridad (mantened `backups/` en privado).
 
+---
+
 ## Pruebas
 
 - `make test-fast` (10 s) / `make test` (1 min): extractor de tests, construcción determinista, esquemas. No necesitan Moodle. Los tests que usan el kit de INCIBE se omiten si aún no lo has importado (`make setup`).
@@ -217,6 +334,26 @@ Errores habituales: AADSTS50105 (la persona no está asignada a la aplicación),
 - `make test-e2e`: ciclo de vida del contenido en una copia sintética: el progreso sobrevive a las actualizaciones, los intentos antiguos
   conservan la versión de pregunta que vieron, los cambios peligrosos se bloquean, los módulos retirados se ocultan (nunca se borran)
   y vuelven a mostrarse si regresan al manifiesto, y un ciclo cerrado rechaza cualquier despliegue.
+
+---
+
+## 🆘 Si algo falla
+
+`make help` lista todos los comandos · `make status` dice si la pila está parada o Moodle sin instalar · `make logs` muestra los registros.
+
+| Síntoma | Causa y solución |
+|---|---|
+| `GNU make 4 or newer is required` | Estás en macOS con el make antiguo. Instala `brew install make` y usa **`gmake`**. |
+| `Cannot connect to the Docker daemon` | Docker no está arrancado. En macOS abre Docker Desktop y espera; en Linux `sudo systemctl start docker`. |
+| `port is already allocated` (8025) | Otro programa usa ese puerto. Añade `MAILPIT_PORT=8026` (u otro libre) a `lms/docker/.env` y repite `make up`. Para el 8080 (Moodle), para el programa que lo usa. |
+| `pdftotext: command not found` | Falta poppler. `brew install poppler` (macOS) o `sudo apt install poppler-utils` (Linux). |
+| `import-kit` no encuentra el zip, o encuentra varios | Debe haber **exactamente un** `.zip` en `upload/`. Con varios: `make import-kit ZIP=upload/<fichero>.zip`. |
+| `stack is not running: make up` / `not installed: make install` | La pila está parada o vacía: `make up` y `make install`. |
+| El plan sale **`blocked`** | El cambio reevaluaría intentos ya hechos o borraría el progreso de la gente. No lo fuerces: hazlo en el ciclo siguiente (ver «Operación»). |
+| Una persona entra con SSO y no ve el curso | Iniciar sesión no matricula: añádela a la cohorte `empleados`. |
+| La pantalla de acceso sale en inglés | Moodle sigue el idioma del navegador; con el navegador en español se ve en español. |
+
+Las causas de los errores conocidos están explicadas en los comentarios del `Makefile` y de `lms/`.
 
 ## Antes de producción (pendiente, no incluido en el piloto)
 
@@ -229,6 +366,24 @@ Errores habituales: AADSTS50105 (la persona no está asignada a la aplicación),
 - Activar el workflow **W6** en el portal GRC: [docs/ciso-assistant-integration.md](docs/ciso-assistant-integration.md). El workflow ya está escrito y probado
   en local, pero el portal solo puede llamar a un Moodle con **dirección https pública**; el piloto en `localhost` no le sirve.
 - **Integración continua** (el repositorio está en https://github.com/futuriones/TrustForma; falta configurarla).
+
+---
+
+## Estructura del repositorio
+
+```
+TrustForma/
+├── Makefile                       ← punto de entrada: make help
+├── courses/concienciacion/        ← definición del curso (course.yaml, textos) y preguntas generadas
+├── lms/
+│   ├── docker/                    ← Moodle + nginx + PostgreSQL + cron + Mailpit (Docker Compose)
+│   ├── moodle/local_awarenesssync ← plugin de Moodle: sincronización, API de cumplimiento, imagen Futurion
+│   └── tools/                     ← Python: extractor de tests, construcción, esquemas JSON, pruebas
+├── docs/                          ← integración con CISO Assistant, capturas
+├── icons/                         ← logotipo y favicons de TrustForma
+├── upload/                        ← aquí va el zip de INCIBE (ver upload/README.md)
+└── kit/                           ← contenido del kit de INCIBE (se crea solo; no está en git)
+```
 
 ## Créditos
 
