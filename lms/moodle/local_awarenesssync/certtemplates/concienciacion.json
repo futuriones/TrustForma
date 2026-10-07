@@ -2,6 +2,8 @@
   "_comment": "Certificate design for mod_customcert: A4 landscape, mm. Elements are rows of customcert_elements; changing this file updates the certificate on the next deploy.",
   "page": {"width": 297, "height": 210, "leftmargin": 15, "rightmargin": 15},
   "elements": [
+    {"name": "Franja coral", "element": "image", "file": "branding/certificate-strip.png", "imagewidth": 297, "imageheight": 4, "data": "", "font": "helvetica", "fontsize": 12, "colour": "#000000", "posx": 0, "posy": 0, "width": 0, "refpoint": 0, "alignment": "L"},
+    {"name": "Logo", "element": "image", "file": "branding/logo.png", "imagewidth": 18, "imageheight": 18, "data": "", "font": "helvetica", "fontsize": 12, "colour": "#000000", "posx": 139, "posy": 8, "width": 0, "refpoint": 0, "alignment": "L"},
     {"name": "Titulo", "element": "text", "data": "CERTIFICADO DE FINALIZACIÓN", "font": "helvetica", "fontsize": 30, "colour": "#0e1b46", "posx": 148, "posy": 30, "width": 260, "refpoint": 1, "alignment": "C"},
     {"name": "Se certifica", "element": "text", "data": "Se certifica que", "font": "helvetica", "fontsize": 15, "colour": "#5a6286", "posx": 148, "posy": 62, "width": 260, "refpoint": 1, "alignment": "C"},
     {"name": "Nombre", "element": "studentname", "data": "", "font": "helvetica", "fontsize": 28, "colour": "#000000", "posx": 148, "posy": 76, "width": 260, "refpoint": 1, "alignment": "C"},

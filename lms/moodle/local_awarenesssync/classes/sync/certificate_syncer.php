@@ -1,5 +1,5 @@
 <?php
-// This file is part of the awareness training platform (INCIBE kit -> Moodle as code).
+// This file is part of TrustForma, a Futurion Solutions S.L. product (INCIBE kit -> Moodle as code).
 
 namespace local_awarenesssync\sync;
 
@@ -17,7 +17,7 @@ defined('MOODLE_INTERNAL') || die();
  */
 final class certificate_syncer extends module_syncer {
     /** Bump when the settings in fields() change, so existing certificates are re-applied on the next deploy. */
-    private const BEHAVIOUR = 2;
+    private const BEHAVIOUR = 3;
 
     protected static function modulename(): string {
         return 'customcert';
@@ -58,7 +58,14 @@ final class certificate_syncer extends module_syncer {
     }
 
     protected static function applied_hash(sync_context $ctx, array $item): string {
-        return util::digest([$ctx->applied_hash($item), self::design($item['template']), self::BEHAVIOUR]);
+        $design = self::design($item['template']);
+        $images = [];
+        foreach ($design['elements'] as $element) {
+            if (isset($element['file'])) {
+                $images[$element['file']] = \file_storage::hash_from_path(self::image_path($element['file']));
+            }
+        }
+        return util::digest([$ctx->applied_hash($item), $design, $images, self::BEHAVIOUR]);
     }
 
     protected static function after_save(sync_context $ctx, array $item, \stdClass $cm, array $fields): void {
@@ -71,10 +78,50 @@ final class certificate_syncer extends module_syncer {
         $DB->update_record('customcert_pages', (object) ($design['page'] + ['id' => $page->id, 'timemodified' => $now]));
         $DB->delete_records('customcert_elements', ['pageid' => $page->id]);
         foreach ($design['elements'] as $sequence => $element) {
+            if (isset($element['file'])) {
+                $element = self::image_element($element);
+            }
             $DB->insert_record('customcert_elements', (object) ($element + [
                 'pageid' => $page->id, 'sequence' => $sequence + 1, 'timecreated' => $now, 'timemodified' => $now,
             ]));
         }
+    }
+
+    /**
+     * An "image" element in the design names a file of this plugin ("file": "branding/logo.png", "imagewidth"/"imageheight" in mm).
+     * The file goes into the site's customcert image area (once; replaced only when its content changes) and the element's data
+     * points at it the way mod_customcert's own form does.
+     */
+    private static function image_element(array $element): array {
+        $path = self::image_path($element['file']);
+        $fs = get_file_storage();
+        $syscontext = \context_system::instance();
+        $name = basename($path);
+        $record = ['contextid' => $syscontext->id, 'component' => 'mod_customcert', 'filearea' => 'image',
+            'itemid' => 0, 'filepath' => '/', 'filename' => $name];
+        $stored = $fs->get_file($syscontext->id, 'mod_customcert', 'image', 0, '/', $name);
+        if (!$stored || $stored->get_contenthash() !== \file_storage::hash_from_path($path)) {
+            if ($stored) {
+                $stored->delete();
+            }
+            $fs->create_file_from_pathname($record, $path);
+        }
+        $element['data'] = json_encode([
+            'width' => (int) ($element['imagewidth'] ?? 0), 'height' => (int) ($element['imageheight'] ?? 0),
+            'contextid' => $syscontext->id, 'filearea' => 'image', 'itemid' => 0, 'filepath' => '/', 'filename' => $name,
+        ]);
+        unset($element['file'], $element['imagewidth'], $element['imageheight']);
+        return $element;
+    }
+
+    /** @return string absolute path of a design image; it must be a file inside this plugin (no "..", no other folder) */
+    private static function image_path(string $relative): string {
+        $root = realpath(__DIR__ . '/../..');
+        $path = realpath($root . '/' . $relative);
+        if ($path === false || strpos($path, $root . DIRECTORY_SEPARATOR) !== 0 || !is_file($path)) {
+            throw new \moodle_exception('certdesignmissing', 'local_awarenesssync', '', $relative);
+        }
+        return $path;
     }
 
     /** @return array decoded design file; the file name comes from the manifest so it is restricted to a safe charset */
