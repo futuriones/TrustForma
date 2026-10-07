@@ -1,0 +1,7 @@
+# The build context is this folder; the image copies config.php, fpm-moodle.conf and nginx/moodle.conf from it.
+# Secrets must never be in the context, whatever a future COPY line says.
+.env
+.env.*
+!.env.example
+secrets
+*.md

@@ -1,0 +1,19 @@
+# Pinned third-party versions of the stack (lms/docker/Dockerfile.alpine, compose.alpine.yaml).
+# This file is the record; the values are used from compose.alpine.yaml (build args and image lines) and, for the two base images,
+# from the ARG defaults of Dockerfile.alpine. lms/tools/tests/test_pins.py fails when they disagree.
+# Bump rule: change the value here AND in those files, `make rebuild`, `make test e2e`, re-run Snyk (code + container),
+# update AGENTS.md + CHANGELOG.md. A digest: `docker buildx imagetools inspect <image>`. A commit: the *peeled* tag commit,
+# `git ls-remote <repo> 'refs/tags/<tag>^{}'`; the Dockerfile fails the build if the fetched commit is not the pinned one
+# (a moved tag cannot change the image silently).
+# php 8.3.35 + nginx 1.30.5 on Alpine 3.24.2 when pinned (2026-09-29).
+PHP_IMAGE=php:8.3-fpm-alpine@sha256:454b11c8907e32878ce92e87b13c14e1bbe6e1b10f4f96d4a19c9b62ec675d41
+NGINX_IMAGE=nginx:stable-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+MOODLE_TAG=v4.5.14
+MOODLE_COMMIT=ee32d48eb7b7c2dc32ea7312b6dd5c780485dd2e
+MOODLE_REPO=https://github.com/moodle/moodle.git
+# customcert 4.4.x requires Moodle >= 4.4 with no upper bound; verified against 4.5 in step 1.
+CUSTOMCERT_TAG=v4.4.14
+CUSTOMCERT_COMMIT=1708958fd627387a44c7d0ada88b90d94fb056b5
+CUSTOMCERT_REPO=https://github.com/mdjnelson/moodle-mod_customcert.git
+POSTGRES_IMAGE=postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
+MAILPIT_IMAGE=axllent/mailpit@sha256:ed9b00c609e77e99c79b93f1178255ebc271868920f2c69a8d166bd5634ed10d

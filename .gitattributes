@@ -1,0 +1,8 @@
+# Text files use LF everywhere (the toolchain runs in Linux containers)
+* text=auto eol=lf
+*.pdf  -text
+*.png  -text
+*.jpg  -text
+*.ico  -text
+*.woff2 -text
+*.pptx -text

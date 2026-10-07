@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "build/<course>-<cycle>/manifest.json (contract between lms/tools/build.py and local_awarenesssync)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["manifest_version", "content_version", "course", "completion", "enrol", "sections", "retired_question_keys"],
+  "properties": {
+    "manifest_version": {"const": 1, "description": "Bump on breaking changes; the plugin refuses unknown versions."},
+    "content_version": {"type": "string", "pattern": "^c[0-9a-f]{12}$", "description": "Changes iff learner-visible content changes (not when dates change)."},
+    "course": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "cycle", "idnumber", "shortname", "fullname", "category", "lang", "summary_html", "start_date", "due_date"],
+      "properties": {
+        "id": {"type": "string"},
+        "cycle": {"type": "integer"},
+        "idnumber": {"type": "string", "pattern": "^[a-z0-9_-]+:[0-9]{4}$"},
+        "shortname": {"type": "string"},
+        "fullname": {"type": "string"},
+        "category": {"type": "string"},
+        "lang": {"type": "string"},
+        "summary_html": {"type": "string"},
+        "start_date": {"type": "string", "description": "INITIAL default, applied to the Moodle course start date only when the course is created.", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "due_date": {"type": "string", "description": "INITIAL default, applied to the Moodle course end date only when the course is created.", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+      }
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["require_pdf_view", "required_item_keys"],
+      "oneOf": [{"required": ["due_days"]}, {"required": ["schedule"]}],
+      "properties": {
+        "due_days": {"type": "integer", "description": "Legacy single-deadline courses only. Exactly one of due_days / schedule is present (as in course.yaml)."},
+        "schedule": {"enum": ["monthly"], "description": "Per-module deadlines: see sections[].due_date."},
+        "require_pdf_view": {"type": "boolean"},
+        "required_item_keys": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/itemkey"}, "description": "Quiz keys that must be passed for course completion."}
+      }
+    },
+    "enrol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cohort"],
+      "properties": {"cohort": {"type": "string"}}
+    },
+    "sections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "title", "visible", "summary_html", "items"],
+        "properties": {
+          "key": {"$ref": "#/$defs/itemkey"},
+          "title": {"type": "string"},
+          "visible": {"type": "boolean"},
+          "summary_html": {"type": "string"},
+          "due_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "description": "INITIAL default deadline of this module, applied as the quiz's \"Expect completed on\" only when the quiz is created (never part of content_hash/content_version; administrators own the date afterwards). Absent = the course due_date."},
+          "items": {"type": "array", "items": {"$ref": "#/$defs/item"}}
+        }
+      }
+    },
+    "retired_question_keys": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/questionkey"}}
+  },
+  "$defs": {
+    "itemkey": {"type": "string", "pattern": "^[a-z0-9_-]+:[0-9]{4}(:[A-Za-z0-9_-]+){0,2}$", "description": "<courseid>:<cycle>[:<module>[:<part>]]. Permanent."},
+    "questionkey": {"type": "string", "pattern": "^M[0-9]{2}-Q[0-9]{2,3}$", "description": "Same pattern as questions.schema.json: a bank that validates must also build."},
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "filename", "sha256", "size", "mime", "source_sha256", "transform"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "allOf": [{"pattern": "^files/[^\\\\]+$"}, {"not": {"pattern": "(^|/)\\.\\.(/|$)"}}],
+          "description": "Relative to the build directory, under files/, no '..' segments (the plugin reads it from disk)."
+        },
+        "filename": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Of the built file (integrity check for the sync)."},
+        "size": {"type": "integer"},
+        "mime": {"type": "string"},
+        "source_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "transform": {"type": "string", "description": "'copy' or e.g. 'jpeg:1600:q85:v1'."}
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": ["key", "type", "name", "content_hash"],
+      "properties": {
+        "key": {"$ref": "#/$defs/itemkey"},
+        "type": {"enum": ["resource", "page", "folder", "quiz", "certificate"]},
+        "name": {"type": "string"},
+        "content_hash": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "Sync updates the Moodle item iff this changes."}
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "type": {"const": "resource"},
+            "file": {"$ref": "#/$defs/file"},
+            "completion": {"enum": ["view", "none"]}
+          },
+          "required": ["file", "completion"],
+          "additionalProperties": false,
+          "patternProperties": {"^(key|type|name|content_hash)$": {}}
+        },
+        {
+          "properties": {
+            "type": {"const": "page"},
+            "content_html": {"type": "string"},
+            "files": {"type": "array", "items": {"$ref": "#/$defs/file"}}
+          },
+          "required": ["content_html", "files"],
+          "additionalProperties": false,
+          "patternProperties": {"^(key|type|name|content_hash)$": {}}
+        },
+        {
+          "properties": {
+            "type": {"const": "folder"},
+            "files": {"type": "array", "items": {"$ref": "#/$defs/file"}}
+          },
+          "required": ["files"],
+          "additionalProperties": false,
+          "patternProperties": {"^(key|type|name|content_hash)$": {}}
+        },
+        {
+          "properties": {
+            "type": {"const": "quiz"},
+            "pass_percent": {"type": "integer"},
+            "attempts": {"type": "integer"},
+            "grademethod": {"type": "string"},
+            "shuffle_questions": {"type": "boolean"},
+            "review": {"enum": ["marks_only", "correctness", "after_close", "immediately"]},
+            "requires": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/itemkey"}, "description": "Keys of items that must be completed first."},
+            "questions": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["key", "text", "options", "answer", "shuffle"],
+                "properties": {
+                  "key": {"$ref": "#/$defs/questionkey"},
+                  "text": {"type": "string"},
+                  "options": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["a", "b", "c", "d"],
+                    "properties": {
+                      "a": {"type": "string", "minLength": 1}, "b": {"type": "string", "minLength": 1},
+                      "c": {"type": "string", "minLength": 1}, "d": {"type": "string", "minLength": 1}
+                    }
+                  },
+                  "answer": {"enum": ["a", "b", "c", "d"]},
+                  "shuffle": {"type": "boolean"}
+                }
+              }
+            }
+          },
+          "required": ["pass_percent", "attempts", "grademethod", "shuffle_questions", "review", "requires", "questions"],
+          "additionalProperties": false,
+          "patternProperties": {"^(key|type|name|content_hash)$": {}}
+        },
+        {
+          "properties": {
+            "type": {"const": "certificate"},
+            "template": {"type": "string"},
+            "validity_months": {"type": "integer"},
+            "requires": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/itemkey"}}
+          },
+          "required": ["template", "validity_months", "requires"],
+          "additionalProperties": false,
+          "patternProperties": {"^(key|type|name|content_hash)$": {}}
+        }
+      ]
+    }
+  }
+}

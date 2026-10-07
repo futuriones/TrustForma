@@ -1,0 +1,16 @@
+# The packages the Python tooling uses directly, each at an exact version. `make lock` turns this into requirements.txt:
+# the same packages PLUS everything they pull in, every one with the sha256 of its files, which is what gets installed.
+#
+# Output of build.py depends on these: Markdown renders the section texts that feed content_version, Pillow encodes the
+# images. A different version can make a deploy "update" things nobody edited.
+# Bump rule: change the pin here, `make lock venv`, `make deps test`, review `make plan` for unexpected updates, update
+# AGENTS.md + CHANGELOG.md.
+PyYAML==6.0.3
+Pillow==12.3.0
+Markdown==3.8.1
+jsonschema==4.19.2
+pytest==9.0.2
+# Transitive (pytest), pinned so an install cannot pick the vulnerable 2.19.1 (Snyk: ReDoS, fixed in 2.20.0).
+Pygments==2.20.0
+# Linter (`make lint`); configuration in pyproject.toml.
+ruff==0.16.9

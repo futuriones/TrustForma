@@ -1,0 +1,196 @@
+name: awareness-lms-alpine
+
+# Runtime: php-fpm (`moodle`, `cron`) + nginx (`web`) on Alpine, PostgreSQL, Mailpit (local mail catcher).
+# The project name gives the volumes their names (awareness-lms-alpine_moodledata / _pgdata): do not rename it.
+# Pins live in plugins.lock (mirrored below; lms/tools/tests/test_pins.py checks they agree).
+#
+# Hardening follows the GRC portal's compose file (the house standard): no new privileges, every capability dropped and only
+# the needed ones added back, read-only root filesystem with tmpfs for scratch space, memory limits, rotated logs.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+x-build: &build
+  context: .
+  dockerfile: Dockerfile.alpine
+  args: &buildargs
+    PHP_IMAGE: php:8.3-fpm-alpine@sha256:454b11c8907e32878ce92e87b13c14e1bbe6e1b10f4f96d4a19c9b62ec675d41
+    NGINX_IMAGE: nginx:stable-alpine@sha256:0985e772fb9f729e6fa0980da05fca5d9c468e870eed43071545afa9d2e27d94
+    MOODLE_TAG: v4.5.14
+    MOODLE_COMMIT: ee32d48eb7b7c2dc32ea7312b6dd5c780485dd2e
+    MOODLE_REPO: https://github.com/moodle/moodle.git
+    CUSTOMCERT_TAG: v4.4.14
+    CUSTOMCERT_COMMIT: 1708958fd627387a44c7d0ada88b90d94fb056b5
+    CUSTOMCERT_REPO: https://github.com/mdjnelson/moodle-mod_customcert.git
+
+x-moodle: &moodle
+  build:
+    <<: *build
+    target: moodle
+  image: awareness-lms/moodle:4.5.14-alpine
+  restart: unless-stopped
+  # Never root: php-fpm and cron run as www-data from the first process on (php-fpm then ignores its `user` directive, which is
+  # fine), so no capability is needed at all. The Moodle code in the image is owned by root and not writable by this user.
+  user: www-data
+  read_only: true
+  tmpfs:
+    # PHP upload temp files (up to post_max_size) and scratch space. Moodle's own temp and cache folders are in moodledata.
+    - /tmp:rw,noexec,nosuid,nodev,size=512m
+  cap_drop:
+    - ALL
+  security_opt:
+    - no-new-privileges:true
+  logging: *logging
+  # Only what config.php reads (+ where the web tier is, for the e2e check). The whole .env is NOT passed on purpose: the admin
+  # password is needed once, at install, and must not sit in the environment of long-running containers.
+  environment:
+    MOODLE_WWWROOT: ${MOODLE_WWWROOT:-http://localhost:8080}
+    MOODLE_DB_NAME: ${MOODLE_DB_NAME:-moodle}
+    MOODLE_DB_USER: ${MOODLE_DB_USER:-moodle}
+    MOODLE_DB_PASSWORD: ${MOODLE_DB_PASSWORD:?set MOODLE_DB_PASSWORD in lms/docker/.env}
+    MOODLE_SMTP_HOST: ${MOODLE_SMTP_HOST:-mailpit:1025}
+    MOODLE_NOREPLY: ${MOODLE_NOREPLY:-noreply@example.invalid}
+    MOODLE_SMTP_SECURE: ${MOODLE_SMTP_SECURE:-}
+    MOODLE_SMTP_AUTHTYPE: ${MOODLE_SMTP_AUTHTYPE:-}
+    MOODLE_SMTP_USER: ${MOODLE_SMTP_USER:-}
+    MOODLE_SMTP_PASSWORD: ${MOODLE_SMTP_PASSWORD:-}
+    MOODLE_SMTP_OAUTH_PROVIDER: ${MOODLE_SMTP_OAUTH_PROVIDER:-}
+    MOODLE_SMTP_OAUTH_CLIENT_ID: ${MOODLE_SMTP_OAUTH_CLIENT_ID:-}
+    MOODLE_SMTP_OAUTH_CLIENT_SECRET: ${MOODLE_SMTP_OAUTH_CLIENT_SECRET:-}
+    MOODLE_SMTP_OAUTH_TENANT: ${MOODLE_SMTP_OAUTH_TENANT:-}
+    MOODLE_SSLPROXY: ${MOODLE_SSLPROXY:-0}
+    MOODLE_REVERSEPROXY: ${MOODLE_REVERSEPROXY:-0}
+    MOODLE_GRC_TOKEN_IPS: ${MOODLE_GRC_TOKEN_IPS:-}
+    AWARENESS_INTERNAL_URL: http://web
+  volumes:
+    - moodledata:/var/www/moodledata
+    # Our local plugin is bind-mounted so edits apply without rebuilding the image (php-fpm only: the web tier serves no plugin files).
+    - ../moodle/local_awarenesssync:/var/www/html/local/awarenesssync
+    # Build output produced by `make build`, read by cli/sync.php.
+    - ../../build:/build:ro
+    # configure_site writes the GRC API token here (gitignored).
+    - ./secrets:/secrets
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16@sha256:1a6ab3f5345eb6dbe04a1349529caabdb0ab09293a09590fad07b2246bfa4b54
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${MOODLE_DB_NAME:-moodle}
+      POSTGRES_USER: ${MOODLE_DB_USER:-moodle}
+      POSTGRES_PASSWORD: ${MOODLE_DB_PASSWORD:?set MOODLE_DB_PASSWORD in lms/docker/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+      - /var/run/postgresql:rw,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    # The entrypoint starts as root to fix the ownership of PGDATA and the socket folder, then drops to `postgres` with gosu:
+    # that needs exactly these, even for uid 0.
+    cap_add:
+      - CHOWN
+      - FOWNER
+      - SETUID
+      - SETGID
+      - DAC_OVERRIDE
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 1g
+    logging: *logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # php-fpm: not published, reachable only by `web` (and `cron` needs no port).
+  moodle:
+    <<: *moodle
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    build:
+      <<: *build
+      target: web
+    image: awareness-lms/web:4.5.14
+    restart: unless-stopped
+    ports:
+      # Localhost only: production sits behind a TLS-terminating reverse proxy.
+      - "127.0.0.1:8080:80"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+      - /var/cache/nginx:rw,noexec,nosuid,nodev
+      - /run:rw,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    # nginx: the master process stays root to bind :80 and hand its workers to the `nginx` user (SETUID/SETGID), owns its
+    # temp folders (CHOWN) and signals those workers on reload and shutdown (KILL: they run under another uid).
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETUID
+      - SETGID
+      - KILL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    logging: *logging
+    depends_on:
+      moodle:
+        condition: service_healthy
+    healthcheck:
+      # HTTP through nginx to php-fpm's ping: fails if either tier is down.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/fpm-ping | grep -q pong"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  cron:
+    <<: *moodle
+    mem_limit: 1g
+    # Alpine has no bash: plain sh. A successful run touches /tmp/cron.ok; the healthcheck fails when the last success is more
+    # than fifteen minutes old, so a cron that keeps failing shows as "unhealthy" in `docker ps` (its errors are in `make logs`).
+    command: ["sh", "-c", "while true; do if php /var/www/html/admin/cli/cron.php >/dev/null; then touch /tmp/cron.ok; else echo \"cron failed: $$?\" >&2; fi; sleep 60; done"]
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/cron.ok && test $$(( $$(date +%s) - $$(stat -c %Y /tmp/cron.ok) )) -lt 900"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 180s
+    depends_on:
+      db:
+        condition: service_healthy
+      moodle:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit@sha256:ed9b00c609e77e99c79b93f1178255ebc271868920f2c69a8d166bd5634ed10d
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    logging: *logging
+
+volumes:
+  moodledata:
+  pgdata:

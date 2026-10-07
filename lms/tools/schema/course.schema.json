@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "courses/<id>/course.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "title", "shortname_prefix", "category", "source_root", "lang", "completion", "quiz_defaults", "certificate", "enrol", "welcome", "modules"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9_-]{2,40}$", "description": "Stable course id. Never rename: it is part of the Moodle idnumber."},
+    "title": {"type": "string", "minLength": 3},
+    "shortname_prefix": {"type": "string", "pattern": "^[A-Z][A-Z0-9]{1,9}$", "description": "Moodle shortname is <prefix>-<cycle>, e.g. CONC-2026."},
+    "category": {"type": "string", "minLength": 1},
+    "source_root": {"type": "string", "description": "Directory holding the kit files, relative to this course.yaml."},
+    "lang": {"type": "string", "pattern": "^[a-z]{2}(_[a-z]{2})?$"},
+    "credit": {"type": "string"},
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["require_pdf_view"],
+      "oneOf": [{"required": ["due_days"]}, {"required": ["schedule"]}],
+      "properties": {
+        "due_days": {"type": "integer", "minimum": 1, "maximum": 730, "description": "INITIAL default: one deadline for the whole course, start + N days, applied to each quiz when it is created. Afterwards administrators edit the dates in Moodle and deploys never overwrite them."},
+        "schedule": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode"],
+          "description": "INITIAL default of the per-module deadlines (set as the quiz's \"Expect completed on\" when created; afterwards administrators own the dates in Moodle). monthly: module N is due at the end of calendar month N (month 1 contains the start date).",
+          "properties": {"mode": {"enum": ["monthly"]}}
+        },
+        "require_pdf_view": {"type": "boolean", "description": "Quiz is locked until the main PDF is viewed."}
+      }
+    },
+    "quiz_defaults": {"$ref": "#/$defs/quiz"},
+    "certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["template", "validity_months"],
+      "properties": {
+        "template": {"type": "string", "minLength": 1},
+        "validity_months": {"type": "integer", "minimum": 1, "maximum": 120}
+      }
+    },
+    "enrol": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cohort"],
+      "properties": {"cohort": {"type": "string", "minLength": 1}}
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_px": {"type": "integer", "minimum": 400, "maximum": 4000},
+        "jpeg_quality": {"type": "integer", "minimum": 40, "maximum": 95}
+      }
+    },
+    "welcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text"],
+      "properties": {
+        "text": {"type": "string", "description": "Markdown file relative to course.yaml. Variables: {{cycle}} {{due_date}} {{start_date}} {{pass_percent}} {{modules_count}} {{course_title}}."},
+        "posters": {"type": "string", "description": "Folder (relative to source_root) with kick-off poster images."},
+        "trypticos": {"type": "string", "description": "Folder (relative to source_root) with leaflet PDFs."}
+      }
+    },
+    "trainer_material": {"type": "boolean", "description": "Publish the PPTX decks in a hidden trainers-only section."},
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "title", "folder", "questions"],
+        "properties": {
+          "key": {"type": "string", "pattern": "^M[0-9]{2}$", "description": "Stable module key. Never reuse or rename."},
+          "title": {"type": "string", "minLength": 3},
+          "folder": {"type": "string", "description": "Module folder relative to source_root. Files inside are discovered by convention."},
+          "questions": {"type": "string", "description": "Question bank YAML relative to course.yaml."},
+          "due_month": {"type": "integer", "minimum": 1, "maximum": 24, "description": "INITIAL default: month (1 = month of the start date) whose end is this module's deadline; default is its position in `modules`. Needs completion.schedule. Not applied to activities that already exist."},
+          "files": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Overrides for the convention (paths relative to the module folder; null disables an item).",
+            "properties": {
+              "pdf": {"type": "string"},
+              "ficha": {"type": ["string", "null"]},
+              "consejos": {"type": ["string", "null"]},
+              "posters": {"type": ["string", "null"]},
+              "presentacion": {"type": ["string", "null"]}
+            }
+          },
+          "quiz": {"$ref": "#/$defs/quiz"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "quiz": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pass_percent": {"type": "integer", "minimum": 1, "maximum": 100},
+        "attempts": {"type": "integer", "minimum": 0, "description": "0 = unlimited."},
+        "grademethod": {"enum": ["highest", "average", "first", "last"]},
+        "shuffle_questions": {"type": "boolean"},
+        "review": {"enum": ["marks_only", "correctness", "after_close", "immediately"], "description": "INITIAL default (applied when the quiz is created; afterwards administrators edit Review options in Moodle). What a learner sees of an attempt. marks_only: mark. correctness: mark + right/wrong per question, never the correct option. after_close/immediately: also feedback and correct answers (after_close only once the quiz has a close date, which we never set)."}
+      }
+    }
+  }
+}

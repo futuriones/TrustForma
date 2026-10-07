@@ -1,0 +1,120 @@
+// Futurion Solutions "Aurora" look for Moodle's Boost theme (loaded by cli/configure_site.php into theme_boost/scss).
+// Tokens come from the Futurion design system: navy chrome, indigo to violet hero, one coral accent for primary actions,
+// Poppins for display type and Inter for text. Nothing on the chrome is a flat fill.
+// Fonts are self-hosted in this plugin (fonts/, SIL OFL): no request ever leaves for a third-party font server.
+
+@font-face { font-family: 'Poppins'; font-weight: 600; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|poppins-latin-600-normal.woff2]]) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-weight: 700; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|poppins-latin-700-normal.woff2]]) format('woff2'); }
+@font-face { font-family: 'Poppins'; font-weight: 800; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|poppins-latin-800-normal.woff2]]) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|inter-latin-400-normal.woff2]]) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|inter-latin-500-normal.woff2]]) format('woff2'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; font-display: swap; src: url([[font:local_awarenesssync|inter-latin-600-normal.woff2]]) format('woff2'); }
+
+$tf-navy-1: #0a1130;
+$tf-navy-3: #161d54;
+$tf-hero-1: #272163;
+$tf-hero-3: #4b2b86;
+$tf-coral-1: #ff2f70;
+$tf-coral-3: #ff6a3d;
+$tf-ink: #0e1b46;
+$tf-line: #e6e8f2;
+$tf-grad-chrome: linear-gradient(135deg, $tf-navy-1 0%, $tf-navy-3 100%);
+$tf-grad-hero: radial-gradient(circle at 20% 15%, rgba(164, 89, 255, .45), transparent 55%),
+               radial-gradient(circle at 85% 80%, rgba(45, 123, 242, .40), transparent 55%),
+               linear-gradient(135deg, $tf-navy-1 0%, $tf-hero-1 55%, $tf-hero-3 100%);
+$tf-grad-cta: linear-gradient(135deg, $tf-coral-1 0%, $tf-coral-3 100%);
+$tf-grad-page: radial-gradient(circle at 12% 0%, rgba(164, 89, 255, .08), transparent 40%),
+               radial-gradient(circle at 92% 20%, rgba(45, 123, 242, .08), transparent 40%),
+               linear-gradient(180deg, #ffffff 0%, #f4f2fb 100%);
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: $tf-grad-page fixed;
+    color: #1b2347;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6, .page-header-headings h1 {
+    font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    color: $tf-ink;
+}
+
+// Top navigation bar.
+.navbar.fixed-top {
+    background: $tf-grad-chrome;
+    border-bottom: 0;
+    box-shadow: 0 10px 30px -18px rgba(13, 22, 64, .6);
+
+    .navbar-brand, .nav-link, .navbar-nav .nav-link, .usermenu .login a, .usermenu .dropdown-toggle {
+        color: #fff;
+    }
+    .nav-link:hover, .nav-link:focus { color: #aab2e0; }
+    .navbar-nav .nav-link.active { box-shadow: inset 0 -3px 0 $tf-coral-1; }
+    .navbar-brand img, .navbar-brand .logo { max-height: 40px; }
+}
+
+// Primary actions: the single warm accent, as a pill.
+.btn-primary {
+    background: $tf-grad-cta;
+    border: 0;
+    border-radius: 9999px;
+    font-family: 'Poppins', system-ui, sans-serif;
+    font-weight: 600;
+    box-shadow: 0 10px 24px -8px rgba(245, 50, 91, .6);
+    transition: transform .15s ease, box-shadow .15s ease;
+
+    &:hover, &:focus, &:active {
+        background: $tf-grad-cta;
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px -8px rgba(245, 50, 91, .7);
+    }
+}
+.btn-secondary, .btn-outline-secondary { border-radius: 9999px; }
+a { color: #2d57d8; }
+a:hover { color: $tf-hero-3; }
+
+// Cards and blocks.
+.card, .block, .course-card, .dashboard-card {
+    border: 1.5px solid $tf-line;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8f7fd 100%);
+    box-shadow: 0 26px 50px -30px rgba(13, 22, 64, .40);
+}
+.card-header, .block .card-title { font-family: 'Poppins', system-ui, sans-serif; font-weight: 600; }
+
+// Course header band.
+#page-header, .page-context-header {
+    font-family: 'Poppins', system-ui, sans-serif;
+}
+#page-course-view-topics .course-content .section-item,
+.course-content .section .card {
+    border-radius: 16px;
+}
+.progress { border-radius: 9999px; background: #eceaf7; }
+.progress-bar { background: $tf-grad-cta; border-radius: 9999px; }
+
+// Login page: the dark aurora panel.
+body#page-login-index {
+    background: $tf-grad-hero fixed;
+
+    #page, #page-wrapper, #page-content, #region-main-box, #topofscroll {
+        background: transparent;
+    }
+
+    #region-main .card, .login-container .card {
+        border: 1px solid rgba(255, 255, 255, .18);
+        border-radius: 22px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, .97) 0%, rgba(244, 242, 251, .97) 100%);
+        box-shadow: 0 30px 60px -24px rgba(5, 8, 30, .8);
+    }
+    .login-heading, .login-logo { color: $tf-ink; }
+    .login-logo img { max-height: 90px; }
+}
+
+// Footer.
+#page-footer {
+    background: $tf-grad-chrome;
+    color: #aab2e0;
+    a { color: #fff; }
+}

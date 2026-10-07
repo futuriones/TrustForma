@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "compliance-report.v1.schema.json",
+  "title": "Awareness training compliance report, contract v1",
+  "description": "Response of the Moodle web service local_awarenesssync_get_compliance_report (classes/external/get_compliance_report.php). The contract is additive: new fields may appear (so additional properties are allowed everywhere), but nothing listed here is renamed, removed or retyped without a new `version`. Consumers: the awareness-import of the GRC portal. Dates are ISO 8601 with offset, or an empty string when not set.",
+  "type": "object",
+  "required": ["version", "generated_at", "course", "cycle", "shortname", "content_version", "start_date", "due_date", "pass_percent", "totals", "users"],
+  "properties": {
+    "version": {"const": 1},
+    "generated_at": {"$ref": "#/$defs/date"},
+    "course": {"type": "string", "minLength": 1},
+    "cycle": {"type": "integer"},
+    "shortname": {"type": "string"},
+    "content_version": {"type": "string", "description": "Content edition of the last deploy that ran to its end"},
+    "start_date": {"$ref": "#/$defs/date_or_empty"},
+    "due_date": {"$ref": "#/$defs/date_or_empty"},
+    "pass_percent": {"type": ["number", "null"], "description": "Pass mark of the quizzes in %; null while the course has no quiz"},
+    "detail": {"enum": ["full", "totals"], "description": "Added field (absent = full). With \"totals\" the `users` list is empty on purpose: read `totals.enrolled`"},
+    "totals": {
+      "type": "object",
+      "description": "Counts over ACTIVE enrolments only",
+      "required": ["enrolled", "completed", "in_progress", "not_started", "overdue", "coverage_percent", "with_overdue_modules", "compliance"],
+      "properties": {
+        "enrolled": {"$ref": "#/$defs/count"},
+        "completed": {"$ref": "#/$defs/count"},
+        "in_progress": {"$ref": "#/$defs/count"},
+        "not_started": {"$ref": "#/$defs/count"},
+        "overdue": {"$ref": "#/$defs/count"},
+        "coverage_percent": {"type": "number", "minimum": 0, "maximum": 100},
+        "with_overdue_modules": {"$ref": "#/$defs/count"},
+        "compliance": {
+          "type": "object",
+          "required": ["compliant", "on_track", "degraded", "failed"],
+          "properties": {
+            "compliant": {"$ref": "#/$defs/count"},
+            "on_track": {"$ref": "#/$defs/count"},
+            "degraded": {"$ref": "#/$defs/count"},
+            "failed": {"$ref": "#/$defs/count"}
+          }
+        }
+      }
+    },
+    "users": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["username", "email", "idnumber", "fullname", "enrolled_at", "enrolment_active", "status", "compliance_status",
+                     "completed_at", "certificate_code", "modules"],
+        "properties": {
+          "username": {"type": "string"},
+          "email": {"type": "string"},
+          "idnumber": {"type": "string", "description": "Employee id, empty if not set"},
+          "fullname": {"type": "string"},
+          "enrolled_at": {"$ref": "#/$defs/date_or_empty"},
+          "enrolment_active": {"type": "boolean", "description": "false: suspended/expired enrolment (cohort leavers) or suspended account; not counted in totals"},
+          "status": {"enum": ["completed", "in_progress", "not_started", "overdue"]},
+          "compliance_status": {"enum": ["compliant", "on_track", "degraded", "failed"]},
+          "completed_at": {"$ref": "#/$defs/date_or_empty"},
+          "certificate_code": {"type": "string"},
+          "modules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["key", "pdf_viewed", "quiz_best_grade", "passed", "passed_at", "due_date", "overdue"],
+              "properties": {
+                "key": {"type": "string", "pattern": "^M\\d{2}$"},
+                "pdf_viewed": {"type": "boolean"},
+                "quiz_best_grade": {"type": ["number", "null"], "minimum": 0, "maximum": 10},
+                "passed": {"type": "boolean"},
+                "passed_at": {"$ref": "#/$defs/date_or_empty"},
+                "due_date": {"$ref": "#/$defs/date_or_empty"},
+                "overdue": {"type": "boolean"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "count": {"type": "integer", "minimum": 0},
+    "date": {"type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2}$"},
+    "date_or_empty": {"type": "string", "pattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{2}:\\d{2})?$"}
+  }
+}

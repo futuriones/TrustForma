@@ -1,0 +1,82 @@
+# Programa de Concienciación en Ciberseguridad, built from the INCIBE "Kit de concienciación".
+# Humans edit this file; `make build` turns it into build/<id>-<cycle>/manifest.json; `make deploy` syncs it to Moodle.
+# Schema: lms/tools/schema/course.schema.json. Stable keys (id, module keys) must never be renamed or reused.
+id: concienciacion
+title: "Programa de Concienciación en Ciberseguridad"
+shortname_prefix: CONC              # Moodle shortname = CONC-<cycle>
+category: "Concienciación"          # Moodle category path = Concienciación / <cycle>
+source_root: ../../kit              # kit files (imported from upload/*.zip by `make import-kit`), relative to this file
+lang: es
+credit: "Contenidos formativos: Kit de concienciación de INCIBE (Instituto Nacional de Ciberseguridad)."
+
+completion:
+  schedule:
+    mode: monthly                   # module N is due at the end of calendar month N (month 1 = the month of the start date);
+                                    # everything is open from day one. Override one module with `due_month: <n>` in `modules:`.
+  require_pdf_view: true            # each test unlocks after the module's main PDF has been viewed
+
+quiz_defaults:
+  pass_percent: 80
+  attempts: 0                       # 0 = unlimited; best grade counts
+  grademethod: highest
+  shuffle_questions: true
+  review: correctness               # learners see their mark and which answers were right/wrong, never the correct option
+
+certificate:
+  template: concienciacion          # mod_customcert template created by configure_site
+  validity_months: 12
+
+enrol:
+  cohort: empleados
+
+images:
+  max_px: 1600                      # posters are 4961x7017 print files (up to 38 MB); learners get web-sized copies
+  jpeg_quality: 85
+
+welcome:
+  text: texts/bienvenida.md
+  posters: Posters_presentacion
+  trypticos: Tripticos
+
+trainer_material: true              # hidden section with the PPTX decks (speaker notes inside), teachers only
+
+# A module = a folder + one entry. Inside each folder the files are found by convention:
+#   <folder>/*.pdf (the one main document) · Ficha/*.pdf · Consejos/* · Posters/* · Presentacion/*.pptx
+# Titles follow Manual_implantacion.pdf §7.1. Use `files:` to override the convention for one module.
+modules:
+  - key: M01
+    title: "La información. El activo imprescindible de tu organización"
+    folder: RecursosFormativos/01_Información
+    questions: questions/M01.yaml
+  - key: M02
+    title: "La información. Clasificación, cifrado y metadatos"
+    folder: RecursosFormativos/02_Información
+    questions: questions/M02.yaml
+  - key: M03
+    title: "La información. Backups, borrado y tipos de almacenamiento"
+    folder: RecursosFormativos/03_Información
+    questions: questions/M03.yaml
+  - key: M04
+    title: "El correo electrónico. Principales fraudes y riesgos"
+    folder: RecursosFormativos/04_Fraudes
+    questions: questions/M04.yaml
+  - key: M05
+    title: "Contraseñas. Y medidas complementarias"
+    folder: RecursosFormativos/05_Contraseñas
+    questions: questions/M05.yaml
+  - key: M06
+    title: "El puesto de trabajo. Medidas de protección I"
+    folder: RecursosFormativos/06_PuestoTrabajo
+    questions: questions/M06.yaml
+  - key: M07
+    title: "El puesto de trabajo. Medidas de protección II"
+    folder: RecursosFormativos/07_PuestoTrabajo
+    questions: questions/M07.yaml
+  - key: M08
+    title: "Dispositivos móviles y teletrabajo. Riesgos y protección"
+    folder: RecursosFormativos/08_Móviles
+    questions: questions/M08.yaml
+  - key: M09
+    title: "Redes sociales. Medidas de seguridad para los perfiles de empresa"
+    folder: RecursosFormativos/09_RedesSociales
+    questions: questions/M09.yaml

@@ -1,0 +1,95 @@
+{
+  "version": 1,
+  "generated_at": "2026-11-20T09:00:00+01:00",
+  "course": "concienciacion",
+  "cycle": 2026,
+  "shortname": "CONC-2026",
+  "content_version": "c9d65dbd83c15",
+  "start_date": "2026-10-01T00:00:00+02:00",
+  "due_date": "2027-06-30T23:59:59+02:00",
+  "pass_percent": 80.0,
+  "totals": {
+    "enrolled": 3,
+    "completed": 1,
+    "in_progress": 1,
+    "not_started": 1,
+    "overdue": 0,
+    "coverage_percent": 33.3,
+    "with_overdue_modules": 2,
+    "compliance": {"compliant": 1, "on_track": 0, "degraded": 2, "failed": 0}
+  },
+  "users": [
+    {
+      "username": "ana.ejemplo",
+      "email": "ana.ejemplo@example.com",
+      "idnumber": "E-0001",
+      "fullname": "Ana Ejemplo",
+      "enrolled_at": "2026-10-01T08:00:00+02:00",
+      "enrolment_active": true,
+      "status": "completed",
+      "compliance_status": "compliant",
+      "completed_at": "2026-10-14T11:32:10+02:00",
+      "certificate_code": "xQEhqiWKbm",
+      "modules": [
+        {"key": "M01", "pdf_viewed": true, "quiz_best_grade": 10.0, "passed": true, "passed_at": "2026-10-02T10:15:00+02:00",
+         "due_date": "2026-10-31T23:59:59+01:00", "overdue": false},
+        {"key": "M02", "pdf_viewed": true, "quiz_best_grade": 9.0, "passed": true, "passed_at": "2026-10-14T11:30:00+02:00",
+         "due_date": "2026-11-30T23:59:59+01:00", "overdue": false}
+      ]
+    },
+    {
+      "username": "luis.muestra",
+      "email": "luis.muestra@example.com",
+      "idnumber": "E-0002",
+      "fullname": "Luis Muestra",
+      "enrolled_at": "2026-10-01T08:00:00+02:00",
+      "enrolment_active": true,
+      "status": "in_progress",
+      "compliance_status": "degraded",
+      "completed_at": "",
+      "certificate_code": "",
+      "modules": [
+        {"key": "M01", "pdf_viewed": true, "quiz_best_grade": 6.0, "passed": false, "passed_at": "",
+         "due_date": "2026-10-31T23:59:59+01:00", "overdue": true},
+        {"key": "M02", "pdf_viewed": false, "quiz_best_grade": null, "passed": false, "passed_at": "",
+         "due_date": "2026-11-30T23:59:59+01:00", "overdue": false}
+      ]
+    },
+    {
+      "username": "eva.prueba",
+      "email": "eva.prueba@example.com",
+      "idnumber": "",
+      "fullname": "Eva Prueba",
+      "enrolled_at": "2026-10-05T09:00:00+02:00",
+      "enrolment_active": true,
+      "status": "not_started",
+      "compliance_status": "degraded",
+      "completed_at": "",
+      "certificate_code": "",
+      "modules": [
+        {"key": "M01", "pdf_viewed": false, "quiz_best_grade": null, "passed": false, "passed_at": "",
+         "due_date": "2026-10-31T23:59:59+01:00", "overdue": true},
+        {"key": "M02", "pdf_viewed": false, "quiz_best_grade": null, "passed": false, "passed_at": "",
+         "due_date": "2026-11-30T23:59:59+01:00", "overdue": false}
+      ]
+    },
+    {
+      "username": "raul.baja",
+      "email": "raul.baja@example.com",
+      "idnumber": "E-0004",
+      "fullname": "Raúl Baja",
+      "enrolled_at": "2026-10-01T08:00:00+02:00",
+      "enrolment_active": false,
+      "status": "in_progress",
+      "compliance_status": "on_track",
+      "completed_at": "",
+      "certificate_code": "",
+      "modules": [
+        {"key": "M01", "pdf_viewed": true, "quiz_best_grade": 8.0, "passed": true, "passed_at": "2026-10-20T16:05:00+02:00",
+         "due_date": "2026-10-31T23:59:59+01:00", "overdue": false},
+        {"key": "M02", "pdf_viewed": false, "quiz_best_grade": null, "passed": false, "passed_at": "",
+         "due_date": "2026-11-30T23:59:59+01:00", "overdue": false}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# Tooling configuration for the Python side (lms/tools). Not a package: nothing here is installed.
+
+[tool.ruff]
+target-version = "py312"
+# The code base uses long lines on purpose (one statement, one line); the limit only stops the extremes.
+line-length = 180
+
+[tool.ruff.lint]
+# pyflakes (unused names, undefined names), pycodestyle errors and warnings, and bugbear (likely bugs).
+select = ["F", "E", "W", "B"]
+# E731: the tests name small lambdas (`names = lambda m: ...`) next to where they are used; a def would add nothing.
+ignore = ["E731"]
+
+[tool.pytest.ini_options]
+testpaths = ["lms/tools/tests"]
+# strict markers: a mistyped @pytest.mark.slwo must fail, not silently run. No cache directory in the repo.
+addopts = "--strict-markers -p no:cacheprovider"
+markers = [
+    "slow: full build of the real kit, twice (~1 min); deselect with -m 'not slow'",
+    "e2e: drives the RUNNING local Moodle; run with `make test-e2e`",
+]
+# The slow test writes two full builds (~500 MB). pytest keeps the temp folders of the last 3 runs by default
+# (about 1.5 GB under /tmp/pytest-of-<user>): keep none.
+tmp_path_retention_policy = "none"

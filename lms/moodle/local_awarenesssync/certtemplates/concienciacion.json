@@ -1,0 +1,16 @@
+{
+  "_comment": "Certificate design for mod_customcert: A4 landscape, mm. Elements are rows of customcert_elements; changing this file updates the certificate on the next deploy.",
+  "page": {"width": 297, "height": 210, "leftmargin": 15, "rightmargin": 15},
+  "elements": [
+    {"name": "Titulo", "element": "text", "data": "CERTIFICADO DE FINALIZACIÓN", "font": "helvetica", "fontsize": 30, "colour": "#0e1b46", "posx": 148, "posy": 30, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Se certifica", "element": "text", "data": "Se certifica que", "font": "helvetica", "fontsize": 15, "colour": "#5a6286", "posx": 148, "posy": 62, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Nombre", "element": "studentname", "data": "", "font": "helvetica", "fontsize": 28, "colour": "#000000", "posx": 148, "posy": 76, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Ha superado", "element": "text", "data": "ha completado y superado todas las evaluaciones del programa", "font": "helvetica", "fontsize": 15, "colour": "#5a6286", "posx": 148, "posy": 100, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Curso", "element": "coursename", "data": "2", "font": "helvetica", "fontsize": 22, "colour": "#3a2a78", "posx": 148, "posy": 114, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Fecha", "element": "date", "data": "{\"dateitem\":\"-2\",\"dateformat\":\"3\"}", "font": "helvetica", "fontsize": 15, "colour": "#5a6286", "posx": 148, "posy": 138, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Etiqueta codigo", "element": "text", "data": "Código de verificación", "font": "helvetica", "fontsize": 10, "colour": "#f5325b", "posx": 148, "posy": 168, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Codigo", "element": "code", "data": "", "font": "helvetica", "fontsize": 12, "colour": "#000000", "posx": 148, "posy": 175, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Credito", "element": "text", "data": "Contenidos formativos: Kit de concienciación de INCIBE (Instituto Nacional de Ciberseguridad)", "font": "helvetica", "fontsize": 8, "colour": "#888888", "posx": 148, "posy": 195, "width": 260, "refpoint": 1, "alignment": "C"},
+    {"name": "Plataforma", "element": "text", "data": "Plataforma TrustForma · Futurion Solutions S.L.", "font": "helvetica", "fontsize": 8, "colour": "#f5325b", "posx": 148, "posy": 200, "width": 260, "refpoint": 1, "alignment": "C"}
+  ]
+}

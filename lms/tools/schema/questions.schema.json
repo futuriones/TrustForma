@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "courses/<id>/questions/M<NN>.yaml",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["module", "questions"],
+  "properties": {
+    "module": {"type": "string", "pattern": "^M[0-9]{2}$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "sha256"],
+      "properties": {
+        "file": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["key", "text", "options", "answer"],
+        "properties": {
+          "key": {"type": "string", "pattern": "^M[0-9]{2}-Q[0-9]{2,3}$", "description": "Permanent. Never reuse for a different question."},
+          "text": {"type": "string", "minLength": 3},
+          "options": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["a", "b", "c", "d"],
+            "properties": {
+              "a": {"type": "string", "minLength": 1},
+              "b": {"type": "string", "minLength": 1},
+              "c": {"type": "string", "minLength": 1},
+              "d": {"type": "string", "minLength": 1}
+            }
+          },
+          "answer": {"enum": ["a", "b", "c", "d"]},
+          "shuffle": {"type": "boolean", "description": "false when options depend on position (e.g. 'Todas las anteriores')."},
+          "retired": {"type": "boolean", "description": "Removed from quizzes but kept in the bank so old attempts stay valid."}
+        }
+      }
+    }
+  }
+}
