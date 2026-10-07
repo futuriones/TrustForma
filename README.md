@@ -337,7 +337,7 @@ Errores habituales: AADSTS50105 (la persona no está asignada a la aplicación),
 
 ---
 
-## 🆘 Si algo falla
+## Si algo falla
 
 `make help` lista todos los comandos · `make status` dice si la pila está parada o Moodle sin instalar · `make logs` muestra los registros.
 
@@ -354,20 +354,6 @@ Errores habituales: AADSTS50105 (la persona no está asignada a la aplicación),
 | La pantalla de acceso sale en inglés | Moodle sigue el idioma del navegador; con el navegador en español se ve en español. |
 
 Las causas de los errores conocidos están explicadas en los comentarios del `Makefile` y de `lms/`.
-
-## Antes de producción (pendiente, no incluido en el piloto)
-
-- Alojamiento con HTTPS (proxy inverso; `MOODLE_SSLPROXY=1`; `MOODLE_REVERSEPROXY=1` solo si el proxy sirve Moodle con otro host/puerto), SMTP real con OAuth 2 (los certificados y los avisos se envían por correo; ver «Correo saliente») y copias de seguridad programadas.
-- **El repositorio debe estar en un sistema de ficheros que respete los permisos** (no una unidad compartida o de red donde todo aparece como legible por todos). `make up` se niega a arrancar con un `MOODLE_WWWROOT` que no sea `localhost` si `.env` o el token son legibles por otros usuarios, o si siguen las contraseñas de ejemplo.
-- **Inicio de sesión único en producción**: el SSO con Microsoft Entra ID está probado en el piloto local (ver «Inicio de sesión único»). Falta la URI de redirección https de producción, asignar el grupo de empleados
-  a la aplicación en Entra y decidir cómo se cargan las personas en la cohorte `empleados` (a mano, CSV, o un plugin/LDAP/SCIM).
-- Revisión humana de las 90 preguntas extraídas de los PDF (`courses/concienciacion/questions/`, generadas por `make setup`); se verifican contra las claves de respuesta de INCIBE
-  pero conviene una lectura antes de examinar a personas.
-- Activar el workflow **W6** en el portal GRC: [docs/ciso-assistant-integration.md](docs/ciso-assistant-integration.md). El workflow ya está escrito y probado
-  en local, pero el portal solo puede llamar a un Moodle con **dirección https pública**; el piloto en `localhost` no le sirve.
-- **Integración continua** (el repositorio está en https://github.com/futuriones/TrustForma; falta configurarla).
-
----
 
 ## Estructura del repositorio
 
